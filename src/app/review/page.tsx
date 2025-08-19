@@ -865,7 +865,7 @@ export default function ReviewPage() {
                 <p className="text-sm text-gray-600">
                   By proceeding with payment, you agree to our{" "}
                   <Link
-                    href="/terms-and-conditions"
+                    href="/terms-and-service"
                     className="text-blue-600 hover:text-blue-700 underline"
                   >
                     Terms and Conditions
