@@ -632,7 +632,7 @@ export default function Header() {
             {categories.map((category, index) => (
               <div
                 key={index}
-                className="whitespace-nowrap font-medium text-[10px]  cursor-pointer px-6 py-1 rounded-full hover:text-white transition-all duration-300"
+                className="whitespace-nowrap font-medium text-[12px]  cursor-pointer px-6 py-1 rounded-full hover:text-white transition-all duration-300"
                 onClick={() => handleCategoryClick(category)}
                 style={{ backgroundColor: "var(--header_background)" }}
                 onMouseEnter={(e) =>
