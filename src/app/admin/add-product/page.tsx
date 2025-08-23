@@ -77,7 +77,7 @@ export default function AdminAddProductPage() {
     "Air conditioner",
     "Freezers",
     "Refrigerators",
-    "TVs",
+    "TV",
     "Gotv",
     "WATER DISPENSER",
     "BLENDER",
@@ -140,7 +140,7 @@ export default function AdminAddProductPage() {
       "Single Door Refrigerator",
       "Double Door Refrigerator",
     ],
-    TVs: [
+    TV: [
       "Signature TV",
       "Laser TV",
       "QNED TV",

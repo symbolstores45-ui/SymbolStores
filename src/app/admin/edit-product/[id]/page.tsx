@@ -62,7 +62,7 @@ export default function EditProductPage() {
     "Air conditioner",
     "Freezers",
     "Refrigerators",
-    "TVs",
+    "TV",
     "Gotv",
     "WATER DISPENSER",
     "BLENDER",
@@ -125,7 +125,7 @@ export default function EditProductPage() {
       "Single Door Refrigerator",
       "Double Door Refrigerator",
     ],
-    TVs: [
+    TV: [
       "Signature TV",
       "Laser TV",
       "QNED TV",

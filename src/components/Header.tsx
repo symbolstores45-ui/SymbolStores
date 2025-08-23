@@ -196,14 +196,40 @@ export default function Header() {
   const categoryButtonRef = useRef<HTMLButtonElement | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
+  // 🔧 FIXED: Better positioning calculation for sticky header
   useEffect(() => {
     if (isMobileMenuOpen && categoryButtonRef.current) {
       const rect = categoryButtonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        // For sticky header, use viewport-relative positioning
+        // No need to add scrollY since the header moves with scroll
+        top: rect.bottom,
+        left: rect.left,
       });
     }
+  }, [isMobileMenuOpen]);
+
+  // 🔧 NEW: Recalculate position on scroll to handle edge cases
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleScroll = () => {
+      if (categoryButtonRef.current) {
+        const rect = categoryButtonRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom,
+          left: rect.left,
+        });
+      }
+    };
+
+    // Add scroll listener when dropdown is open
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [isMobileMenuOpen]);
 
   const [isMobile, setIsMobile] = useState(false);
@@ -651,11 +677,12 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Categories Dropdown Menu (keep as is) */}
+      {/* Mobile Categories Dropdown Menu */}
       {isMobileMenuOpen && (
         <>
+          {/* 🔧 FIXED: Better overlay positioning */}
           <div
-            className="block relative max-w-[1400px] inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
           <div
@@ -666,9 +693,10 @@ export default function Header() {
             style={
               !isMobile
                 ? {
+                    // 🔧 FIXED: Use viewport-relative positioning for desktop
+                    position: "fixed", // Changed from "absolute" to "fixed"
                     top: dropdownPosition.top,
                     left: dropdownPosition.left,
-                    position: "absolute",
                   }
                 : undefined
             }

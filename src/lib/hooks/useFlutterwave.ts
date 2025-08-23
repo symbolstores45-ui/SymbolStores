@@ -108,7 +108,7 @@ export function useFlutterwavePayment(clearCart?: () => void) {
             }
 
             const script = document.createElement('script');
-            // blocking payment
+            // blocking payment from going through
             // script.src = 'https://checkout.flutterwave.com/v3.js';
             script.onload = () => resolve();
             script.onerror = () => reject(new Error('Failed to load Flutterwave script'));
