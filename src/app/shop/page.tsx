@@ -1141,19 +1141,19 @@ const allBrands = [
                 </div>
 
                 {/* Brands Filter */}
-                <div className="mb-6">
+                <div className="mb-4">
                   {/* Brand Search Bar */}
                   <div className="relative mb-4">
                     <input
                       type="text"
                       placeholder="Search For Brands"
                       onChange={(e) => debouncedSetBrandSearch(e.target.value)}
-                      className="w-full px-3 py-3 pl-10 text-sm border border-gray-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500 min-h-[44px]"
+                      className="w-full px-3 py-1 pl-10 text-sm border border-gray-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500 min-h-[30px]"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg
-                        width="16"
-                        height="16"
+                        width="14"
+                        height="14"
                         viewBox="0 0 19 19"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
@@ -1167,7 +1167,7 @@ const allBrands = [
                   </div>
 
                   {/* Brand List - Show first 10 by default */}
-                  <div className="space-y-4 overflow-y-auto">
+                  <div className="space-y-2 overflow-y-auto">
                     {filteredBrands
                       .slice(0, showAllBrands ? filteredBrands.length : 10)
                       .map((brand) => (
@@ -1206,7 +1206,7 @@ const allBrands = [
                               )}
                             </div>
                           </div>
-                          <span className="text-lg text-gray-700 group-hover:text-gray-900">
+                          <span className="text-sm text-gray-700 group-hover:text-gray-900">
                             {brand}
                           </span>
                         </label>
@@ -1231,7 +1231,7 @@ const allBrands = [
                   <h4 className="text-sm font-medium text-gray-900 mb-4">
                     Price Range
                   </h4>
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {priceRanges.map((range) => (
                       <label
                         key={range.id}
@@ -1267,7 +1267,7 @@ const allBrands = [
                 </div>
 
                 {/* In Stock Only Filter */}
-                <div className="mb-6">
+                <div className="mb-2">
                   <label className="flex items-center cursor-pointer group min-h-[36px] py-1">
                     <div className="relative mr-3">
                       <input
@@ -1310,7 +1310,7 @@ const allBrands = [
                 </div>
 
                 {/* Discount Filter */}
-                <div className="mb-6">
+                <div className="mb-2">
                   <h4 className="text-sm font-medium text-gray-900 mb-4">
                     Discount
                   </h4>
@@ -1397,7 +1397,7 @@ const allBrands = [
                             href={`/shop?category=${encodeURIComponent(
                               categoryParam
                             )}&subcategory=${encodeURIComponent(subcategory)}`}
-                            className="flex-shrink-0 bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm hover:border-orange-300 hover:text-orange-600 transition-colors min-h-[36px] flex items-center whitespace-nowrap"
+                            className="flex-shrink-0 bg-white border border-gray-200 px-3 py-[4px] rounded-lg text-sm hover:border-orange-300 hover:text-orange-600 transition-colors flex items-center whitespace-nowrap"
                           >
                             {subcategory}
                           </Link>
@@ -1464,7 +1464,7 @@ const allBrands = [
               ) : (
                 <>
                   {/* Products Grid - IMPROVED SPACING FOR SMALL SCREENS */}
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6 mb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 mb-8">
                     {currentProducts.map((product, index) => (
                       <div key={product.id} className="flex justify-center">
                         <ProductCard product={product} isTopRated={index < 3} />

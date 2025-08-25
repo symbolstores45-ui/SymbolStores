@@ -252,10 +252,10 @@ export default function ProductCard({
         <div>
           {/* Category */}
           <span
-            className="text-[0.5rem] sm:text-[0.9rem]"
+            className="text-[0.5rem] sm:text-[0.7rem]"
             style={{
-              color: "#EE5858",
-              backgroundColor: "#D8262670",
+              color: "#ee5858ff",
+              backgroundColor: "#d826261a",
               borderRadius: "100px",
               padding: "4px 8px",
               marginBottom: "8px",
@@ -269,7 +269,7 @@ export default function ProductCard({
           <Link href={getProductUrl()}>
             <h2
               style={{
-                fontSize: "1rem",
+                fontSize: ".875rem",
                 fontWeight: "400",
                 margin: "8px 0 4px",
                 cursor: "pointer",
@@ -302,7 +302,7 @@ export default function ProductCard({
           >
             <div>
               <p
-                className="text-[1rem] sm:text-[1.5rem]"
+                className="text-[.9rem] sm:text-[1.1rem]"
                 style={{
                   fontWeight: "bold",
                   color: "#1f2937",
