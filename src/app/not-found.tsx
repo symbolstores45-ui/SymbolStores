@@ -12,9 +12,9 @@ export default function NotFound() {
   return (
     <div>
       <Header />
-      <div className="w-full max-w-[800px] m-auto px-4 mb-20">
+      <div className="w-full max-w-[800px] m-auto px-4 mt-16 mb-20">
         <div className="flex flex-col items-center text-center justify-center">
-          <div className="w-full max-w-[500px] mb-6">
+          <div className="w-full max-w-[400px] mb-6">
             <Image
               src="/assets/404img.png"
               alt="404 Illustration"

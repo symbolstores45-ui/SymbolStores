@@ -18,17 +18,19 @@ function FlutterwavePayment({
   onSuccess,
   onError,
 }: {
-  orderData: any; // Contains finalTotal, items, etc.
+  orderData: any;
   onSuccess: (data: any) => void;
   onError: (error: string) => void;
 }) {
-  const { initiatePayment, isProcessing, error } = useFlutterwavePayment();
-  const { state } = useCart(); // Get full cart state here
+  const { state, clearCart } = useCart(); // ✅ Get clearCart function
+  const { initiatePayment, isProcessing, error } = useFlutterwavePayment(clearCart); // ✅ Pass clearCart
   const [paymentAttempted, setPaymentAttempted] = useState(false);
+  const [paymentSuccessful, setPaymentSuccessful] = useState(false); // ✅ NEW: Track actual success
 
   const handleFlutterwavePayment = async () => {
     try {
       setPaymentAttempted(true);
+      setPaymentSuccessful(false); // ✅ Reset success state
 
       console.log("🛒 Original cart state.items:", state.items);
 
@@ -42,7 +44,6 @@ function FlutterwavePayment({
           quantityType: typeof item.quantity,
           calculation: item.amount * item.quantity,
           isNaN: isNaN(item.amount * item.quantity),
-          // Check for the missing properties here for debugging
           category: (item as any).category,
           subcategory: (item as any).subcategory,
           brand: (item as any).brand,
@@ -65,7 +66,6 @@ function FlutterwavePayment({
       }
 
       // ✅ Defensive mapping to ensure all CartItem properties are present
-      // This is crucial if your cart items might sometimes lack these properties
       const cartItemsForPayment: CartItem[] = state.items.map((item) => ({
         id: item.id,
         itemName: item.itemName,
@@ -73,28 +73,25 @@ function FlutterwavePayment({
         amount: item.amount,
         imageURL: item.imageURL,
         sku: item.sku,
-        category: item.category || "unknown", // Provide default if missing
+        category: item.category || "unknown",
         subcategory: item.subcategory || "unknown",
         brand: item.brand || "unknown",
-        slug: item.slug || item.itemName.toLowerCase().replace(/\s+/g, "-"), // Generate slug if missing
-        inStock: item.inStock || true, // Provide default if missing
-        originalPrice: item.originalPrice, // Optional, can be undefined
-        warranty: item.warranty, // Optional, can be undefined
+        slug: item.slug || item.itemName.toLowerCase().replace(/\s+/g, "-"),
+        inStock: item.inStock || true,
+        originalPrice: item.originalPrice,
+        warranty: item.warranty,
       }));
 
-      console.log(
-        "🔄 Cart items passed to Flutterwave hook (defensive map):",
-        cartItemsForPayment
-      );
+      console.log("🔄 Cart items passed to Flutterwave hook (defensive map):", cartItemsForPayment);
 
       const paymentRequestData = {
         email: orderData.email || "customer@example.com",
         name: orderData.name,
         phone: orderData.phone || "08012345678",
         address: orderData.address || "Address not provided",
-        amount: orderData.totalAmount, // This is already state.finalTotal from ReviewPage
-        orderId: `ORD-${Date.now()}`, // Generate unique order ID here or get from backend
-        items: cartItemsForPayment, // ✅ Use the defensively mapped items
+        amount: orderData.totalAmount,
+        orderId: `ORD-${Date.now()}`,
+        items: cartItemsForPayment,
         userId: orderData.userId,
         totalAmountItemsOnly: state.totalAmount,
         shippingCost: state.shippingCost,
@@ -102,16 +99,14 @@ function FlutterwavePayment({
         finalTotal: state.finalTotal,
       };
 
-      console.log(
-        "🔵 Starting payment with data for Flutterwave:",
-        paymentRequestData
-      );
+      console.log("🔵 Starting payment with data for Flutterwave:", paymentRequestData);
 
       const result = await initiatePayment(paymentRequestData);
 
       if (result.success && result.data) {
         console.log("🟢 Payment completed successfully!");
-
+        setPaymentSuccessful(true); // ✅ Only set true on actual success
+        
         onSuccess({
           orderId: result.data.orderId,
           paymentMethod: "flutterwave",
@@ -123,23 +118,23 @@ function FlutterwavePayment({
           amount: orderData.totalAmount,
         });
       } else {
+        // ✅ Payment failed - ensure success is false
+        setPaymentSuccessful(false);
         onError(result.error || "Payment failed");
       }
     } catch (err: any) {
+      // ✅ Payment error - ensure success is false
+      setPaymentSuccessful(false);
+      
       let userMessage = "Payment failed. Please try again.";
 
       if (err?.error) {
         if (err.error.includes("cancelled")) {
           userMessage = "Payment was cancelled. You can try again when ready.";
         } else if (err.error.includes("verification")) {
-          userMessage =
-            "Payment verification failed. If money was deducted, please contact support.";
-        } else if (
-          err.error.includes("network") ||
-          err.error.includes("Network")
-        ) {
-          userMessage =
-            "Network error. Please check your connection and try again.";
+          userMessage = "Payment verification failed. If money was deducted, please contact support.";
+        } else if (err.error.includes("network") || err.error.includes("Network")) {
+          userMessage = "Network error. Please check your connection and try again.";
         } else {
           userMessage = err.error;
         }
@@ -195,11 +190,7 @@ function FlutterwavePayment({
       {error && (
         <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded border border-orange-200">
           <div className="flex items-start gap-2">
-            <svg
-              className="w-4 h-4 mt-0.5 flex-shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
+            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -214,7 +205,8 @@ function FlutterwavePayment({
         </div>
       )}
 
-      {paymentAttempted && !error && !isProcessing && (
+      {/* ✅ FIXED: Only show success when paymentSuccessful is explicitly true */}
+      {paymentSuccessful && (
         <div className="text-sm text-green-600 bg-green-50 p-3 rounded border border-green-200">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -232,8 +224,7 @@ function FlutterwavePayment({
       <div className="text-xs text-gray-600 text-center">
         <p>💳 Card • 🏦 Bank Transfer • 📱 USSD • 💰 Mobile Money</p>
         <p className="mt-1">
-          Secured by Flutterwave •{" "}
-          {process.env.NODE_ENV === "development" ? "Test Mode" : "Live Mode"}
+          Secured by Flutterwave • {process.env.NODE_ENV === "development" ? "Test Mode" : "Live Mode"}
         </p>
         {process.env.NODE_ENV === "development" && (
           <p className="mt-1 text-blue-600">
