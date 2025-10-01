@@ -6,25 +6,46 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        port: '',
         pathname: '/**',
       },
-        {
+      {
         protocol: 'https',
         hostname: 'symbolstores.com',
-        port: '',
         pathname: '/assets/images/**',
       },
       {
         protocol: 'https',
         hostname: 'api.placeholder.com',
-        port: '',
         pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'uandu.com.ng',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'fouanistore.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'simsng.com',  
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'jumia.com.ng',  
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ng.jumia.is',   // 👈 add this
         pathname: '/**',
       },
     ],
