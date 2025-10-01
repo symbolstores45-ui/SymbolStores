@@ -140,7 +140,7 @@ export default function Home() {
                 Fast Shipping
               </h3>
               <p className="text-[10px] sm:text-[14px]">
-                Free shipping for all orders over N99,000
+                Free shipping for all orders over N999,000
               </p>
             </div>
           </div>
