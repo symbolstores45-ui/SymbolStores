@@ -50,7 +50,7 @@ export default function UploadBulkProducts() {
       "subcategory",
       "brand",
       "imageURL",
-      "sku", // ✅ ADDED: SKU as required field
+      "sku", // 
     ];
 
     requiredFields.forEach((field) => {
