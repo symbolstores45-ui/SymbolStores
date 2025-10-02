@@ -42,7 +42,7 @@ function ShopContent() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(12);
+  const [productsPerPage] = useState(32); // Fixed to 32 products per page
 
   // Brands list
 const allBrands = [
@@ -1464,7 +1464,7 @@ const allBrands = [
               ) : (
                 <>
                   {/* Products Grid - IMPROVED SPACING FOR SMALL SCREENS */}
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 mb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6 mb-8">
                     {currentProducts.map((product, index) => (
                       <div key={product.id} className="flex justify-center">
                         <ProductCard product={product} isTopRated={index < 3} />
