@@ -42,7 +42,7 @@ function ShopContent() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(32); // Fixed to 32 products per page
+  const [productsPerPage] = useState(30); // Fixed to 32 products per page
 
   // Brands list
 const allBrands = [
