@@ -35,17 +35,28 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'simsng.com',  
+        hostname: 'simsng.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'jumia.com.ng',  
+        hostname: 'jumia.com.ng',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'ng.jumia.is',   // 👈 add this
+        hostname: 'ng.jumia.is',
+        pathname: '/**',
+      },
+      // 👇 Add these two to fix your error
+      {
+        protocol: 'https',
+        hostname: 'salva.ams3.cdn.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ams3.cdn.digitaloceanspaces.com',
         pathname: '/**',
       },
     ],
