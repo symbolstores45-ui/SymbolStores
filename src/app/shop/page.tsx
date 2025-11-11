@@ -1,4 +1,4 @@
-// src/app/shop/page.tsx - Fixed Version with a Working Filter Reduction
+// src/app/shop/page.tsx - Fixed Version with Working Filter Reduction
 "use client";
 
 import React from "react";
@@ -42,7 +42,7 @@ function ShopContent() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(30); // Fixed to 32 products per page
+  const [productsPerPage] = useState(12);
 
   // Brands list
 const allBrands = [
@@ -248,10 +248,14 @@ const allBrands = [
 
     // Sidebar Filters (user-selected filters)
     if (filters.selectedBrands.length > 0) {
-      filtered = filtered.filter((product) =>
-        product.brand && filters.selectedBrands.includes(product.brand)
-      );
-    }
+  filtered = filtered.filter((product) =>
+    product.brand &&
+    filters.selectedBrands.some(
+      (selected) => selected.toLowerCase() === product.brand.toLowerCase()
+    )
+  );
+}
+
 
     if (filters.selectedSubcategories.length > 0) {
       filtered = filtered.filter((product) =>
@@ -1464,7 +1468,7 @@ const allBrands = [
               ) : (
                 <>
                   {/* Products Grid - IMPROVED SPACING FOR SMALL SCREENS */}
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6 mb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 mb-8">
                     {currentProducts.map((product, index) => (
                       <div key={product.id} className="flex justify-center">
                         <ProductCard product={product} isTopRated={index < 3} />
