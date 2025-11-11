@@ -1,4 +1,4 @@
-// src/app/shop/page.tsx - Fixed Version with Working Filter Reduction
+// src/app/shop/page.tsx - Fixed Version with a Working Filter Reduction
 "use client";
 
 import React from "react";
