@@ -1,4 +1,365 @@
-// src/lib/hooks/useFlutterwave.ts - Updated with Cart Clearing
+// // src/lib/hooks/useFlutterwave.ts - Updated with Cart Clearing
+// "use client";
+
+// import { useState } from "react";
+
+// interface FlutterwaveConfig {
+//   public_key: string;
+//   tx_ref: string;
+//   amount: number;
+//   currency: string;
+//   payment_options: string;
+//   customer: {
+//     email: string;
+//     phone_number: string;
+//     name: string;
+//   };
+//   customizations: {
+//     title: string;
+//     description: string;
+//     logo?: string;
+//   };
+//   meta?: {
+//     [key: string]: string | number;
+//   };
+// }
+
+// export interface CartItem {
+//   id: string;
+//   itemName: string;
+//   category: string;
+//   subcategory: string;
+//   brand: string;
+//   amount: number;
+//   originalPrice?: number;
+//   imageURL: string;
+//   slug: string;
+//   inStock: boolean;
+//   quantity: number;
+//   sku: string;
+//   warranty?: string;
+// }
+
+// interface PaymentData {
+//   email: string;
+//   name: string;
+//   phone: string;
+//   address?: string;
+//   amount: number;
+//   orderId: string;
+//   items: CartItem[];
+//   userId?: string;
+//   totalAmountItemsOnly: number;
+//   shippingCost: number;
+//   taxAmount: number;
+//   finalTotal: number;
+// }
+
+// interface FlutterwaveResponse {
+//   status: string;
+//   transaction_id: string;
+//   tx_ref: string;
+//   customer: {
+//     email: string;
+//     name: string;
+//     phone_number: string;
+//   };
+//   [key: string]: any;
+// }
+
+// interface PaymentResult {
+//   success: boolean;
+//   data?: {
+//     orderId: string;
+//     transaction_id: string;
+//     tx_ref: string;
+//     orderStatus?: string;
+//     emailSent?: boolean;
+//     adminEmailSent?: boolean;
+//     verificationData?: any;
+//     [key: string]: any;
+//   };
+//   error?: string;
+// }
+
+// interface VerificationResult {
+//   success: boolean;
+//   data?: any;
+//   error?: string;
+//   warning?: string;
+// }
+
+// declare global {
+//   interface Window {
+//     FlutterwaveCheckout: any;
+//   }
+// }
+
+// // ✅ UPDATED: Added clearCart parameter to the hook
+// export function useFlutterwavePayment(clearCart?: () => void) {
+//   const [isProcessing, setIsProcessing] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+
+//   const loadFlutterwaveScript = (): Promise<void> => {
+//     return new Promise((resolve, reject) => {
+//       if (window.FlutterwaveCheckout) {
+//         resolve();
+//         return;
+//       }
+
+//       const script = document.createElement("script");
+
+//       script.src = "https://checkout.flutterwave.com/v3.js";
+//       script.onload = () => resolve();
+//       script.onerror = () =>
+//         reject(new Error("Failed to load Flutterwave script"));
+//       document.head.appendChild(script);
+//     });
+//   };
+
+//   const simplifyItemsForMeta = (items: CartItem[]): string => {
+//     return items
+//       .map((item) => `${item.itemName} (${item.quantity})`)
+//       .join(", ");
+//   };
+
+//   const initiatePayment = async (
+//     paymentData: PaymentData
+//   ): Promise<PaymentResult> => {
+//     try {
+//       setIsProcessing(true);
+//       setError(null);
+
+//       await loadFlutterwaveScript();
+
+//       // Generate unique transaction reference
+//       const txRef = `FLW_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+//       // 🚀 STEP 1: Create order in database BEFORE payment
+//       console.log("🛒 Creating Flutterwave order before payment...");
+//       console.log(`👤 Customer: ${paymentData.name} (${paymentData.email})`);
+//       console.log(`💰 Amount: ₦${paymentData.finalTotal.toLocaleString()}`);
+//       console.log(`🆔 Order ID: ${paymentData.orderId}`);
+//       console.log(`📝 Tx Ref: ${txRef}`);
+
+//       const orderResponse = await fetch("/api/orders/create", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           orderId: paymentData.orderId,
+//           txRef: txRef,
+//           customerName: paymentData.name,
+//           customerEmail: paymentData.email, // ✅ CRITICAL: Save email for order history
+//           customerPhone: paymentData.phone,
+//           customerAddress: paymentData.address,
+//           items: paymentData.items,
+//           totalAmountItemsOnly: paymentData.totalAmountItemsOnly,
+//           shippingCost: paymentData.shippingCost,
+//           taxAmount: paymentData.taxAmount,
+//           finalTotal: paymentData.finalTotal,
+//           paymentMethod: "flutterwave",
+//           status: "pending",
+//           userId: paymentData.userId || null, // ✅ null for guests, ID for logged-in
+//         }),
+//       });
+
+//       if (!orderResponse.ok) {
+//         const errorData = await orderResponse.json();
+//         console.error("❌ Order creation failed:", errorData);
+//         throw new Error(
+//           `Failed to create order: ${errorData.error || "Unknown error"}`
+//         );
+//       }
+
+//       const orderResult = await orderResponse.json();
+//       console.log("✅ Order created successfully:", orderResult);
+
+//       // Prepare meta data with cart information
+//       const metaData: { [key: string]: string | number } = {
+//         order_id: paymentData.orderId,
+//         customer_name: paymentData.name,
+//         customer_email: paymentData.email,
+//         customer_address: paymentData.address || "",
+//         items_count: paymentData.items.length,
+//         items_summary: simplifyItemsForMeta(paymentData.items),
+//         user_id: paymentData.userId || "",
+//         total_amount_items_only: paymentData.totalAmountItemsOnly,
+//         shipping_cost: paymentData.shippingCost,
+//         tax_amount: paymentData.taxAmount,
+//         final_total: paymentData.finalTotal,
+//       };
+
+//       const config: FlutterwaveConfig = {
+//         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY!,
+//         tx_ref: txRef, // ✅ Use generated txRef that matches database
+//         amount: paymentData.finalTotal, // ✅ FIXED: Use actual total instead of hardcoded
+//         currency: "NGN",
+//         payment_options: "card,mobilemoney,ussd,banktransfer",
+//         customer: {
+//           email: paymentData.email,
+//           phone_number: paymentData.phone,
+//           name: paymentData.name,
+//         },
+//         customizations: {
+//           title: process.env.NEXT_PUBLIC_APP_NAME || "Symbol Stores",
+//           description: `Payment for order ${paymentData.orderId}`,
+//         },
+//         meta: metaData,
+//       };
+
+//       return new Promise<PaymentResult>((resolve, reject) => {
+//         window.FlutterwaveCheckout({
+//           ...config,
+//           callback: async (response: FlutterwaveResponse) => {
+//             console.log("✅ Flutterwave payment response:", response);
+
+//             if (response.status === "successful") {
+//               try {
+//                 // ✅ STEP 2: Verify payment and update order
+//                 console.log("🔍 Verifying payment with backend...");
+//                 const verificationResult = await verifyPayment(
+//                   response.transaction_id,
+//                   txRef
+//                 );
+
+//                 setIsProcessing(false);
+
+//                 if (verificationResult.success) {
+//                   console.log("🎉 Payment verification successful!");
+
+//                   // ✅ CLEAR CART ONLY AFTER SUCCESSFUL VERIFICATION
+//                   if (clearCart && typeof clearCart === "function") {
+//                     console.log("🛒 Clearing cart after successful payment...");
+//                     clearCart();
+//                   }
+
+//                   resolve({
+//                     success: true,
+//                     data: {
+//                       orderId:
+//                         verificationResult.data?.orderId || paymentData.orderId,
+//                       transaction_id: response.transaction_id,
+//                       tx_ref: response.tx_ref,
+//                       orderStatus: verificationResult.data?.status,
+//                       emailSent: verificationResult.data?.emailSent,
+//                       adminEmailSent: verificationResult.data?.adminEmailSent,
+//                       verificationData: verificationResult.data,
+//                     },
+//                   });
+//                 } else {
+//                   // ❌ DON'T CLEAR CART ON VERIFICATION FAILURE
+//                   const errorMsg =
+//                     verificationResult.warning ||
+//                     verificationResult.error ||
+//                     "Payment verification failed";
+//                   console.error("❌ Payment verification failed:", errorMsg);
+//                   console.log(
+//                     "🛒 Cart NOT cleared - customer can retry payment"
+//                   );
+//                   setError(errorMsg);
+//                   reject({
+//                     success: false,
+//                     error: errorMsg,
+//                   });
+//                 }
+//               } catch (error) {
+//                 // ❌ DON'T CLEAR CART ON ERROR
+//                 console.error("❌ Payment verification error:", error);
+//                 console.log("🛒 Cart NOT cleared - customer can retry payment");
+//                 setIsProcessing(false);
+//                 setError("Payment verification error");
+//                 reject({
+//                   success: false,
+//                   error: "Payment verification error",
+//                 });
+//               }
+//             } else {
+//               // ❌ DON'T CLEAR CART ON PAYMENT FAILURE
+//               console.error("❌ Payment was not successful:", response.status);
+//               console.log("🛒 Cart NOT cleared - customer can retry payment");
+//               setIsProcessing(false);
+//               setError("Payment was not successful");
+//               reject({
+//                 success: false,
+//                 error: "Payment was not successful",
+//               });
+//             }
+//           },
+//           onclose: () => {
+//             // ❌ DON'T CLEAR CART WHEN USER CLOSES MODAL
+//             setIsProcessing(false);
+//             console.log("⚠️ Payment modal closed by user");
+//             console.log("🛒 Cart NOT cleared - user might want to retry");
+//             reject({
+//               success: false,
+//               error: "Payment cancelled by user",
+//             });
+//           },
+//         });
+//       });
+//     } catch (error) {
+//       setIsProcessing(false);
+//       const errorMessage =
+//         error instanceof Error
+//           ? error.message
+//           : "Payment initialization failed";
+//       console.error("❌ Payment initialization error:", errorMessage);
+//       setError(errorMessage);
+//       throw {
+//         success: false,
+//         error: errorMessage,
+//       };
+//     }
+//   };
+
+//   // ✅ Simplified verification function
+//   const verifyPayment = async (
+//     transactionId: string,
+//     txRef: string
+//   ): Promise<VerificationResult> => {
+//     try {
+//       console.log("📡 Sending verification request to backend:", {
+//         transaction_id: transactionId,
+//         tx_ref: txRef,
+//       });
+
+//       // ✅ Call your existing verification API
+//       const response = await fetch("/api/payments/verify-flutterwave-payment", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           transaction_id: transactionId,
+//           tx_ref: txRef,
+//         }),
+//       });
+
+//       const result = await response.json();
+//       console.log("📨 Backend verification response:", result);
+//       return result;
+//     } catch (error) {
+//       console.error("❌ Payment verification error:", error);
+//       return { success: false, error: "Verification failed" };
+//     }
+//   };
+
+//   return {
+//     initiatePayment,
+//     verifyPayment,
+//     isProcessing,
+//     error,
+//   };
+// }
+
+
+
+
+
+// src/lib/hooks/useFlutterwave.ts - FIXED VERSION
+// Fixes the race condition where onclose fires after successful payment
 "use client";
 
 import { useState } from "react";
@@ -95,7 +456,6 @@ declare global {
   }
 }
 
-// ✅ UPDATED: Added clearCart parameter to the hook
 export function useFlutterwavePayment(clearCart?: () => void) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +468,6 @@ export function useFlutterwavePayment(clearCart?: () => void) {
       }
 
       const script = document.createElement("script");
-
       script.src = "https://checkout.flutterwave.com/v3.js";
       script.onload = () => resolve();
       script.onerror = () =>
@@ -118,9 +477,16 @@ export function useFlutterwavePayment(clearCart?: () => void) {
   };
 
   const simplifyItemsForMeta = (items: CartItem[]): string => {
-    return items
-      .map((item) => `${item.itemName} (${item.quantity})`)
+    // Limit the summary length to prevent issues with large payloads
+    const summary = items
+      .slice(0, 5) // Only include first 5 items in summary
+      .map((item) => `${item.itemName.substring(0, 30)} (${item.quantity})`)
       .join(", ");
+    
+    if (items.length > 5) {
+      return `${summary}... +${items.length - 5} more`;
+    }
+    return summary;
   };
 
   const initiatePayment = async (
@@ -132,7 +498,6 @@ export function useFlutterwavePayment(clearCart?: () => void) {
 
       await loadFlutterwaveScript();
 
-      // Generate unique transaction reference
       const txRef = `FLW_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // 🚀 STEP 1: Create order in database BEFORE payment
@@ -151,7 +516,7 @@ export function useFlutterwavePayment(clearCart?: () => void) {
           orderId: paymentData.orderId,
           txRef: txRef,
           customerName: paymentData.name,
-          customerEmail: paymentData.email, // ✅ CRITICAL: Save email for order history
+          customerEmail: paymentData.email,
           customerPhone: paymentData.phone,
           customerAddress: paymentData.address,
           items: paymentData.items,
@@ -161,7 +526,7 @@ export function useFlutterwavePayment(clearCart?: () => void) {
           finalTotal: paymentData.finalTotal,
           paymentMethod: "flutterwave",
           status: "pending",
-          userId: paymentData.userId || null, // ✅ null for guests, ID for logged-in
+          userId: paymentData.userId || null,
         }),
       });
 
@@ -176,25 +541,19 @@ export function useFlutterwavePayment(clearCart?: () => void) {
       const orderResult = await orderResponse.json();
       console.log("✅ Order created successfully:", orderResult);
 
-      // Prepare meta data with cart information
+      // ✅ FIXED: Simplified meta data to prevent large payload issues
       const metaData: { [key: string]: string | number } = {
         order_id: paymentData.orderId,
-        customer_name: paymentData.name,
-        customer_email: paymentData.email,
-        customer_address: paymentData.address || "",
+        customer_name: paymentData.name.substring(0, 50), // Limit length
         items_count: paymentData.items.length,
-        items_summary: simplifyItemsForMeta(paymentData.items),
-        user_id: paymentData.userId || "",
-        total_amount_items_only: paymentData.totalAmountItemsOnly,
-        shipping_cost: paymentData.shippingCost,
-        tax_amount: paymentData.taxAmount,
+        items_summary: simplifyItemsForMeta(paymentData.items).substring(0, 200), // Limit length
         final_total: paymentData.finalTotal,
       };
 
       const config: FlutterwaveConfig = {
         public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY!,
-        tx_ref: txRef, // ✅ Use generated txRef that matches database
-        amount: paymentData.finalTotal, // ✅ FIXED: Use actual total instead of hardcoded
+        tx_ref: txRef,
+        amount: paymentData.finalTotal,
         currency: "NGN",
         payment_options: "card,mobilemoney,ussd,banktransfer",
         customer: {
@@ -210,21 +569,29 @@ export function useFlutterwavePayment(clearCart?: () => void) {
       };
 
       return new Promise<PaymentResult>((resolve, reject) => {
+        // ✅ FIX: Track payment state to prevent race condition with onclose
+        let paymentHandled = false;
+        let paymentSuccessful = false;
+
         window.FlutterwaveCheckout({
           ...config,
           callback: async (response: FlutterwaveResponse) => {
-            console.log("✅ Flutterwave payment response:", response);
+            console.log("✅ Flutterwave payment callback triggered:", response);
+            
+            // ✅ Mark that we've handled the payment
+            paymentHandled = true;
 
             if (response.status === "successful") {
+              paymentSuccessful = true;
+              
               try {
-                // ✅ STEP 2: Verify payment and update order
                 console.log("🔍 Verifying payment with backend...");
                 const verificationResult = await verifyPayment(
                   response.transaction_id,
                   txRef
                 );
 
-                setIsProcessing(false);
+                console.log("📨 Backend verification response:", verificationResult);
 
                 if (verificationResult.success) {
                   console.log("🎉 Payment verification successful!");
@@ -235,6 +602,9 @@ export function useFlutterwavePayment(clearCart?: () => void) {
                     clearCart();
                   }
 
+                  setIsProcessing(false);
+                  setError(null);
+
                   resolve({
                     success: true,
                     data: {
@@ -242,45 +612,67 @@ export function useFlutterwavePayment(clearCart?: () => void) {
                         verificationResult.data?.orderId || paymentData.orderId,
                       transaction_id: response.transaction_id,
                       tx_ref: response.tx_ref,
-                      orderStatus: verificationResult.data?.status,
+                      orderStatus: verificationResult.data?.status || "confirmed",
                       emailSent: verificationResult.data?.emailSent,
                       adminEmailSent: verificationResult.data?.adminEmailSent,
                       verificationData: verificationResult.data,
                     },
                   });
                 } else {
-                  // ❌ DON'T CLEAR CART ON VERIFICATION FAILURE
+                  // ❌ Verification failed but payment succeeded
+                  // This is a critical state - payment went through but we couldn't verify
                   const errorMsg =
                     verificationResult.warning ||
                     verificationResult.error ||
-                    "Payment verification failed";
+                    "Payment verification failed. Please contact support with your transaction ID.";
+                  
                   console.error("❌ Payment verification failed:", errorMsg);
-                  console.log(
-                    "🛒 Cart NOT cleared - customer can retry payment"
-                  );
+                  console.log("🛒 Cart NOT cleared - verification failed");
+                  
+                  setIsProcessing(false);
                   setError(errorMsg);
-                  reject({
+                  
+                  // ✅ IMPORTANT: Still resolve with partial success since payment went through
+                  // The customer paid, even if verification failed
+                  resolve({
                     success: false,
-                    error: errorMsg,
+                    error: `${errorMsg} Transaction ID: ${response.transaction_id}`,
+                    data: {
+                      orderId: paymentData.orderId,
+                      transaction_id: response.transaction_id,
+                      tx_ref: response.tx_ref,
+                      orderStatus: "pending_verification",
+                    },
                   });
                 }
-              } catch (error) {
-                // ❌ DON'T CLEAR CART ON ERROR
-                console.error("❌ Payment verification error:", error);
-                console.log("🛒 Cart NOT cleared - customer can retry payment");
+              } catch (verificationError) {
+                // ❌ Error during verification, but payment might have succeeded
+                console.error("❌ Payment verification error:", verificationError);
+                console.log("🛒 Cart NOT cleared - verification error");
+                
                 setIsProcessing(false);
-                setError("Payment verification error");
-                reject({
+                const errorMsg = `Verification error. If money was deducted, please contact support. Transaction ID: ${response.transaction_id}`;
+                setError(errorMsg);
+                
+                resolve({
                   success: false,
-                  error: "Payment verification error",
+                  error: errorMsg,
+                  data: {
+                    orderId: paymentData.orderId,
+                    transaction_id: response.transaction_id,
+                    tx_ref: response.tx_ref,
+                    orderStatus: "pending_verification",
+                  },
                 });
               }
             } else {
-              // ❌ DON'T CLEAR CART ON PAYMENT FAILURE
+              // Payment was not successful
               console.error("❌ Payment was not successful:", response.status);
-              console.log("🛒 Cart NOT cleared - customer can retry payment");
+              console.log("🛒 Cart NOT cleared - payment failed");
+              
               setIsProcessing(false);
               setError("Payment was not successful");
+              
               reject({
                 success: false,
                 error: "Payment was not successful",
@@ -288,14 +680,29 @@ export function useFlutterwavePayment(clearCart?: () => void) {
             }
           },
           onclose: () => {
-            // ❌ DON'T CLEAR CART WHEN USER CLOSES MODAL
-            setIsProcessing(false);
-            console.log("⚠️ Payment modal closed by user");
-            console.log("🛒 Cart NOT cleared - user might want to retry");
-            reject({
-              success: false,
-              error: "Payment cancelled by user",
-            });
+            console.log("⚠️ Flutterwave modal closed");
+            
+            // ✅ FIX: Only handle close if payment wasn't already processed
+            if (!paymentHandled) {
+              console.log("🚫 Modal closed before payment completion");
+              console.log("🛒 Cart NOT cleared - user cancelled");
+              
+              setIsProcessing(false);
+              setError(null); // Don't show error for user-initiated close
+              
+              reject({
+                success: false,
+                error: "Payment cancelled by user",
+              });
+            } else if (paymentSuccessful) {
+              // Modal closed after successful payment - this is normal
+              console.log("✅ Modal closed after successful payment - this is expected");
+              // Don't do anything - the callback already handled everything
+            } else {
+              // Modal closed after failed payment
+              console.log("⚠️ Modal closed after payment failure");
+              // The callback already handled the error
+            }
           },
         });
       });
@@ -314,7 +721,6 @@ export function useFlutterwavePayment(clearCart?: () => void) {
     }
   };
 
-  // ✅ Simplified verification function
   const verifyPayment = async (
     transactionId: string,
     txRef: string
@@ -325,7 +731,6 @@ export function useFlutterwavePayment(clearCart?: () => void) {
         tx_ref: txRef,
       });
 
-      // ✅ Call your existing verification API
       const response = await fetch("/api/payments/verify-flutterwave-payment", {
         method: "POST",
         headers: {
@@ -339,10 +744,22 @@ export function useFlutterwavePayment(clearCart?: () => void) {
 
       const result = await response.json();
       console.log("📨 Backend verification response:", result);
+      
+      // ✅ Handle HTTP errors
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || `Verification failed with status ${response.status}`,
+        };
+      }
+      
       return result;
     } catch (error) {
-      console.error("❌ Payment verification error:", error);
-      return { success: false, error: "Verification failed" };
+      console.error("❌ Payment verification network error:", error);
+      return { 
+        success: false, 
+        error: "Network error during verification. Please contact support." 
+      };
     }
   };
 
